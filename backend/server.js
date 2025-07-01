@@ -9,7 +9,7 @@ const fs = require('fs');
 dotenv.config(); // Load environment variables from .env file
 
 const app = express();
-const PORT = process.env.PORT || 5000; // Define server port
+const PORT = process.env.PORT ; // Define server port
 
 // Create upload directory if it doesn't exist
 const uploadDir = path.join(__dirname, 'public/uploads');
@@ -20,7 +20,9 @@ if (!fs.existsSync(uploadDir)) {
 
 // --- Middleware (Registered First) ---
 app.use(cors({
-  origin: process.env.CORS_ORIGIN || 'http://localhost:8080', // Keep for development or specific needs
+  origin: '*', // This allows all origins
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], // Explicitly allow common HTTP methods
+  allowedHeaders: ['Content-Type', 'Authorization'], // Allow common headers
   credentials: true
 }));
 app.use(express.json({ limit: '10mb' }));
@@ -90,15 +92,15 @@ const startServer = async () => {
 
     // --- Catch-all to serve frontend's index.html for client-side routing ---
     // This should be after your API routes but before the 404 handler.
-    app.get('*', (req, res, next) => { // Added 'next' parameter
-        // Check if the request is for an API route
-        if (req.originalUrl.startsWith('/api/') || req.originalUrl.startsWith('/uploads/')) { // Added /uploads/
-            // Let the 404 handler or specific API route handle it
-            return next(); // Pass to the next middleware (which could be the 404)
-        }
-        // Otherwise, serve the index.html from the built frontend
-        res.sendFile(path.join(__dirname, 'public', 'dist', 'index.html'));
-    });
+    app.get('*', (req, res, next) => {
+    console.log(`Catch-all hit for: ${req.originalUrl}`); // Add this log
+    if (req.originalUrl.startsWith('/api/') || req.originalUrl.startsWith('/uploads/')) {
+        console.log(`API or Upload request, passing to next: ${req.originalUrl}`); // Add this log
+        return next();
+    }
+    console.log(`Serving index.html for: ${req.originalUrl}`); // Add this log
+    res.sendFile(path.join(__dirname, 'public', 'dist', 'index.html'));
+});
 
 
     // 4. Register 404 and Global Error Handlers (LAST)
